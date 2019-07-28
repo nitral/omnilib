@@ -17,6 +17,7 @@ setup(
     url='https://github.com/nitral/omnilib',
     author='Nilay Binjola',
     author_email='nilaybinjola@gmail.com',
+    license="MIT",
     packages=['omnilib'],
     install_requires=['dill']
 )
