@@ -1,2 +1,3 @@
-# omnilib
-My All-Purpose Python Library
+Omnilib
+=======
+My All-Purpose Python Library for Computation and Machine Learning
