@@ -4,7 +4,7 @@ import multiprocessing
 
 import dill
 
-_MapArgs = collections.namedtuple("_MapArgs", "fn arg")
+_MapArgs = collections.namedtuple("_MapArgs", ["fn", "arg"])
 
 
 class MRJobInputIterator(object):
