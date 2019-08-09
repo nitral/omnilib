@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <title>Probe: ${prober_path} | Omnilib</title>
+
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+  <script type="text/javascript">
+    function createAlert(html) {
+      alert = $("<div>").css("margin", "auto").css("width", "50%").css("top", 0).css("left", 0).css("right", 0).css("text-align", "center");
+      alert.attr("class", "alert alert-dismissible fade");
+      alert.attr("role", "alert");
+      alert.html(html);
+      alert.append($("<button>").attr("class", "close").attr("data-dismiss", "alert").attr("aria-label", "Close").append($("<span>").html("&times;")));
+      return alert;
+    }
+
+    $(document).ready(function() {
+      $('#prober-form').submit(false);
+      $('#prober-input-reformat').submit(false);
+
+      proberDict = JSON.parse('${prober_dict}');
+      proberInputWhitespace = 4;
+      proberInputMaxRows = 30;
+
+      $("#prober-input").val(JSON.stringify(proberDict, undefined, proberInputWhitespace));
+      $("#prober-input").attr("rows", Math.min($("#prober-input").val().split("\n").length, proberInputMaxRows))
+      $("#prober-input-reformat-whitespace").val(proberInputWhitespace);
+
+      $("#prober-input-reformat-submit").click(function() {
+        whitespace = parseInt($("#prober-input-reformat-whitespace").val());
+        try {
+          dict = JSON.parse($("#prober-input").val());
+          $("#prober-input").val(JSON.stringify(dict, undefined, whitespace));
+        } catch (e) {
+          alert = createAlert("<strong>FAILED!</strong> " + e);
+          alert.addClass("alert-danger");
+          $("#alerts").append(alert);
+          alert.addClass("show");
+        }
+      });
+
+      $("#prober-form-submit").click(function() {
+        newProberDict = JSON.stringify(JSON.parse($("#prober-input").val()));
+        $.ajax({
+          method: "PATCH",
+          data: newProberDict,
+          beforeSend: function(xhr) {
+            $("#prober-form-submit").attr("disabled", true);
+          }
+        }).fail(function() {
+          alert = createAlert("<strong>FAILED!</strong> The Probe Resource could not be updated!");
+          alert.addClass("alert-danger");
+          $("#alerts").append(alert);
+          alert.addClass("show");
+        }).done(function() {
+          alert = createAlert("<strong>Success!</strong> The Probe Resource was updated!");
+          alert.addClass("alert-success");
+          $("#alerts").append(alert);
+          alert.addClass("show");
+        }).always(function() {
+          $("#prober-form-submit").attr("disabled", false);
+        });
+      });
+    });
+  </script>
+</head>
+
+<body>
+  <div id="alerts" style="position:absolute; margin:auto; top:0; left: 0; right:0; text-align:center; z-index:10"></div>
+
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="/">Omnilib</a>
+    <div class="collapse navbar-collapse" id="navbarText">
+      <ul class="navbar-nav mr-auto">
+      </ul>
+      <span class="navbar-text">
+        All-purpose Python Library
+      </span>
+    </div>
+  </nav>
+
+  <div class="container-fluid">
+    <br />
+    <div class="row">
+      <div class="col-4">
+        <p class="h4">Probe Resource Editor <span class="badge badge-pill badge-info">Live!</span></p>
+        <hr />
+        <p class="h5"><strong>Name:</strong> ${prober_path}</p>
+        % if prober_desc:
+        <p><strong>Description:</strong> ${prober_desc}</p>
+        % endif
+        <br />
+        <p><small><strong>DO NOT</strong> change the key labels!</small></p>
+        <p><small><strong>DO NOT</strong> change the <code>py/object|tuple</code> key values!</small></p>
+        <hr />
+        <br />
+        <p class="h5">Formatting</p>
+        <form id="prober-input-reformat">
+          <div class="form-group">
+            <div class="input-group">
+              <label for="prober-input-reformat-whitespace">Whitespace</label>
+            </div>
+            <div class="input-group">
+              <input type="number" class="form-control" id="prober-input-reformat-whitespace" placeholder="Whitespace" />
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" id='prober-input-reformat-submit'>Reformat</button>
+        </form>
+      </div>
+      <div class="col-8">
+        <form id="prober-form">
+          <div class="form-group">
+            <div class="input-group">
+              <textarea class="form-control" aria-label="With textarea" rows="10" id="prober-input"></textarea>
+            </div>
+          </div>
+          <div align="center">
+            <button type="submit" class="btn btn-primary" id='prober-form-submit'>Submit</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+</body>
+
+</html>

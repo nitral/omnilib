@@ -11,6 +11,7 @@ class HTTPMethod(Enum):
     """HTTP Verbs enum"""
     GET = 1
     POST = 2
+    PATCH = 3
 
 
 class HTTPHandlerRegistry(metaclass=Singleton):
@@ -96,7 +97,7 @@ class HTTPRequestDispatcher(BaseHTTPRequestHandler):
     Handlers are externally stored. This class acts as the RequestHandlerClass
     for the HTTPServer.
 
-    Supported HTTP Methods: GET, POST
+    Supported HTTP Methods: GET, POST, PUT
     """
 
     def get_handler(self, method):
@@ -109,6 +110,11 @@ class HTTPRequestDispatcher(BaseHTTPRequestHandler):
 
     def do_POST(self):
         handler = self.get_handler(HTTPMethod.POST)
+        if handler:
+            handler(self).handle()
+
+    def do_PATCH(self):
+        handler = self.get_handler(HTTPMethod.PATCH)
         if handler:
             handler(self).handle()
 
