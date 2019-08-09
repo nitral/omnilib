@@ -8,7 +8,7 @@ Packages
 This package holds modules for performing computation through various frameworks, eg: Map-Reduce.
 
 ### HTTP
-This package holds modules for creating, interacting with, and maintaining a light-weight HTTP service.
+This package holds modules for creating, interacting with, and maintaining a light-weight HTTP service, Probe Resources.
 
 ### Util
-This package holds miscellaneous utility classes and methods, eg: Singleton
+This package holds miscellaneous utility classes and methods, eg: Singleton, Mutable Variables.
