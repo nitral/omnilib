@@ -14,3 +14,15 @@ This package holds modules for creating, interacting with, and maintaining a lig
 
 ### Util
 This package holds miscellaneous utility classes and methods, eg: Singleton, Mutable Variables.
+
+Setup
+-----
+### Install
+```
+$ pip install .
+```
+
+### Run Tests
+```
+$ pytest
+```
