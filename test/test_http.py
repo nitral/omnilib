@@ -69,7 +69,7 @@ class TestProbeResource(unittest.TestCase):
 class TestProbeResourceHandlers(unittest.TestCase):
     def test_patch_handler(self):
         with h.MultiHandlerSingleThreadHTTPServer() as server:
-            host, port = server.server_address()
+            host, port = server.server_address
             print(host, port)
 
             # Create Variables to export to server
@@ -118,7 +118,7 @@ class TestProbeResourceHandlers(unittest.TestCase):
 
     def test_get_handler(self):
         with h.MultiHandlerSingleThreadHTTPServer() as server:
-            host, port = server.server_address()
+            host, port = server.server_address
 
             # Create Variables to export to server
             mutvar_var = util.MutableVariable(util.MutableVariable(123))
@@ -191,7 +191,7 @@ class TestHTTPServer(unittest.TestCase):
         for registry in default_handler_registries:
             method, handler = registry
             server.register_default_handler(method, handler)
-        host, port = server.server_address()
+        host, port = server.server_address
         return (host, port, server)
 
     def assert_response(self, host, port, method, path, response_code):
@@ -280,7 +280,7 @@ class TestHTTPServer(unittest.TestCase):
 
     def test_server_with(self):
         with h.MultiHandlerSingleThreadHTTPServer() as server:
-            host, port = server.server_address()
+            host, port = server.server_address
             server.register_handler(
                 h.HTTPMethod.GET, "/", self.GETStatusOKHandler)
             server.start_serving_async()

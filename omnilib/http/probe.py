@@ -28,7 +28,7 @@ def export_probe_resource_to_server(server, probe_resource):
     Overwrites any existing Probe Resource at the same path on this server.
     """
     ProbeResourceHandlerRegistry().register_probe_resource(
-        server.server_address(), probe_resource)
+        server.server_address, probe_resource)
     probe_path = _get_probe_absolute_path(probe_resource)
     server.register_handler(HTTPMethod.GET, probe_path,
                             ProbeResourceGETHandler)

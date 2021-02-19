@@ -14,11 +14,10 @@ class HTTPMethod(Enum):
     PATCH = 3
 
 
-class HTTPHandlerRegistry(metaclass=Singleton):
-    """Global Singleton Registry for all Omnilib HTTP Servers.
+class HTTPHandlerRegistry(object):
+    """Registry for an HTTP Server.
 
-    This enables adding and removing HTTP Request handlers on the go for any
-    Omnilib HTTP Server.
+    This enables adding and removing HTTP Request handlers on the go.
     Supports regular handlers for responding to requests on a specific path.
     Supports default handlers for various HTTP methods.
     """
@@ -27,51 +26,37 @@ class HTTPHandlerRegistry(metaclass=Singleton):
         self.request_handlers = {}
         self.default_request_handlers = {}
 
-    def register_request_handler(self, server, method, path, handler):
-        if server not in self.request_handlers:
-            self.request_handlers[server] = {}
-        if method not in self.request_handlers[server]:
-            self.request_handlers[server][method] = {}
-        self.request_handlers[server][method][path] = handler
+    def register_request_handler(self, method, path, handler):
+        if method not in self.request_handlers:
+            self.request_handlers[method] = {}
+        self.request_handlers[method][path] = handler
 
-    def register_default_request_handler(self, server, method, handler):
-        if server not in self.default_request_handlers:
-            self.default_request_handlers[server] = {}
-        self.default_request_handlers[server][method] = handler
+    def register_default_request_handler(self, method, handler):
+        self.default_request_handlers[method] = handler
 
-    def get_handler(self, server, method, path):
-        request_handler = self.get_request_handler(server, method, path)
+    def get_handler(self, method, path):
+        request_handler = self.get_request_handler(method, path)
         if request_handler:
             return request_handler
-        default_handler = self.get_default_request_handler(server, method)
+        default_handler = self.get_default_request_handler(method)
         if default_handler:
             return default_handler
         else:
             return None
 
-    def get_request_handler(self, server, method, path):
-        handler = self.request_handlers.get(
-            server, {}).get(method, {}).get(path, None)
-        return handler
+    def get_request_handler(self, method, path):
+        return self.request_handlers.get(method, {}).get(path, None)
 
-    def get_default_request_handler(self, server, method):
-        handler = self.default_request_handlers.get(
-            server, {}).get(method, None)
-        return handler
+    def get_default_request_handler(self, method):
+        return self.default_request_handlers.get(method, None)
 
-    def deregister_server(self, server):
-        if server in self.request_handlers:
-            del self.request_handlers[server]
-        if server in self.default_request_handlers:
-            del self.default_request_handlers[server]
+    def deregister_request_handler(self, method, path):
+        if self.get_request_handler(method, path):
+            del self.request_handlers[method][path]
 
-    def deregister_request_handler(self, server, method, path):
-        if self.get_request_handler(server, method, path):
-            del self.request_handlers[server][method][path]
-
-    def deregister_default_request_handler(self, server, method):
-        if self.get_default_request_handler(server, method):
-            del self.default_request_handlers[server][method]
+    def deregister_default_request_handler(self, method):
+        if self.get_default_request_handler(method):
+            del self.default_request_handlers[method]
 
 
 class StatelessHTTPHandler(abc.ABC):
@@ -101,7 +86,7 @@ class HTTPRequestDispatcher(BaseHTTPRequestHandler):
     """
 
     def get_handler(self, method):
-        return HTTPHandlerRegistry().get_handler(self.server, method, self.path)
+        return self.server.handler_registry.get_handler(method, self.path)
 
     def do_GET(self):
         handler = self.get_handler(HTTPMethod.GET)
@@ -119,7 +104,7 @@ class HTTPRequestDispatcher(BaseHTTPRequestHandler):
             handler(self).handle()
 
 
-class MultiHandlerSingleThreadHTTPServer(object):
+class MultiHandlerSingleThreadHTTPServer(HTTPServer):
     """Create a Basic Single-Threaded HTTP Server where the user can register
     handlers.
 
@@ -147,38 +132,34 @@ class MultiHandlerSingleThreadHTTPServer(object):
         elif port < 0:
             raise ValueError("Port should be non-negative integer")
 
-        self.httpd = HTTPServer((host, port), HTTPRequestDispatcher)
-        self.host, self.port = self.httpd.server_address
+        super().__init__((host, port), HTTPRequestDispatcher)
+        self.handler_registry = HTTPHandlerRegistry()
         self.serving = False
         self.server_thread = None
-
-    def server_address(self):
-        return (self.host, self.port)
 
     def start_serving_sync(self):
         if not self.serving:
             self.serving = True
-            self.httpd.serve_forever()
+            self.serve_forever()
 
     def start_serving_async(self):
         # Create a thread to run the server on with a name containing the
         # server's address
         if not self.serving:
             server_thread_name = "Server-Thread::Address:" + \
-                str(self.host) + "Port:" + str(self.port)
+                str(self.server_address[0]) + \
+                "Port:" + str(self.server_address[1])
             self.server_thread = threading.Thread(
                 target=self.start_serving_sync, name=server_thread_name)
             self.server_thread.start()
 
     def shutdown(self):
         if self.serving:
-            self.httpd.shutdown()
-            self.httpd.server_close()
+            super().shutdown()
+            self.server_close()
             if self.server_thread:
                 self.server_thread.join()
             self.serving = False
-        # Remove handlers attached with this server on shutdown
-        HTTPHandlerRegistry().deregister_server(self.httpd)
 
     def register_handler(self, method, path, handler):
         """Registers a handler to the server for serving requests with the
@@ -192,7 +173,7 @@ class MultiHandlerSingleThreadHTTPServer(object):
             path (string): Resource path. eg: '/'
             handler (StatelessHTTPHandler): Must implement the handle method
         """
-        HTTPHandlerRegistry().register_request_handler(self.httpd, method, path, handler)
+        self.handler_registry.register_request_handler(method, path, handler)
 
     def register_default_handler(self, method, handler):
         """Registers a default handler for responding to requests on paths for
@@ -204,13 +185,13 @@ class MultiHandlerSingleThreadHTTPServer(object):
             method (HTTPMethod): HTTP verb for the handler
             handler (StatelessHTTPHandler): Must implement the handle method
         """
-        HTTPHandlerRegistry().register_default_request_handler(self.httpd, method, handler)
+        self.handler_registry.register_default_request_handler(method, handler)
 
     def deregister_handler(self, method, path):
-        HTTPHandlerRegistry().deregister_request_handler(self.httpd, method, path)
+        self.handler_registry.deregister_request_handler(method, path)
 
     def deregister_default_handler(self, method):
-        HTTPHandlerRegistry().deregister_default_request_handler(self.httpd, method)
+        self.handler_registry.deregister_default_request_handler(method)
 
     def __del__(self):
         self.shutdown()
