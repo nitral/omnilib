@@ -1,5 +1,7 @@
 Omnilib
 =======
+[![Omnilib](https://github.com/nitral/omnilib/actions/workflows/omnilib.yml/badge.svg?branch=master)](https://github.com/nitral/omnilib/actions/workflows/omnilib.yml)
+
 My All-Purpose Python Library for Computation and Machine Learning
 
 Packages
