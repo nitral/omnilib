@@ -18,6 +18,7 @@ setup(
     author='Nilay Binjola',
     author_email='nilaybinjola@gmail.com',
     license="MIT",
-    packages=['omnilib'],
+    packages=['omnilib', 'omnilib.compute', 'omnilib.http', 'omnilib.util'],
+    package_data={'omnilib.http': ['data/probes/*']},
     install_requires=['dill']
 )
