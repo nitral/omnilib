@@ -2,4 +2,4 @@ setuptools==41.0.1
 jsonpickle==1.2
 Mako==1.0.14
 dill==0.3.0
-numpy==1.16.4
+numpy==1.22.0
