@@ -1,4 +1,4 @@
-setuptools==41.0.1
+setuptools==65.5.1
 jsonpickle==1.2
 Mako==1.0.14
 dill==0.3.0
